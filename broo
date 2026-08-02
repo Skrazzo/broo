@@ -109,11 +109,17 @@ start_mumble_client () {
     # Save the PID.
     echo $! > "$VAR_RUN/mumble_client.pid"
 
-    # Wait till we establish a conenction. Upon connection, a line is logged
-    # starting with "ServerHandler: TLS cipher", so we monitor the logs.
+    # Wait till we establish a conenction. Upon connection, the server logs a
+    # line containing "Authenticated", so we monitor its logs. Give up after a
+    # while, so a client which never connects doesn't hang us forever.
     # tail + grep idea by 00prometheus on <https://superuser.com/a/900134>.
-    (tail -f "$VAR_RUN/mumble_client.out" &) | grep --line-buffered -q \
-                                                    "ServerHandler: TLS cipher"
+    if ! (tail -f "$VAR_RUN/murmur.out" &) \
+         | timeout 30 grep --line-buffered -q "Authenticated"; then
+        echo "Timed out waiting for the Mumble client to connect."
+        echo "Its logs are in $VAR_RUN/mumble_client.out. Use 'q' to clean up,"
+        echo "and 'p' if the server's certificate needs accepting."
+        exit 1
+    fi
 }  # End of start_mumble_client()
 
 
