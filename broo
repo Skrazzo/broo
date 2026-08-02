@@ -54,6 +54,31 @@ start_mumble_server() {
 }  # End of start_mumble_server()
 
 
+reset_mumble_quit_flag() {
+    # Mark Mumble's settings as quit normally to avoid its recovery prompt.
+    show_warning="${1:-false}"
+
+    local mumble_cfg="$XDG_CONFIG_HOME/Mumble/Mumble/mumble_settings.json"
+    if [[ ! -f "$mumble_cfg" ]]; then
+        return
+    fi
+
+    local quit_key='"mumble_has_quit_normally":'
+    if ! grep -Eq "$quit_flag_false" "$mumble_cfg"; then
+        return
+    fi
+
+    local quit_flag_false="$quit_key[[:space:]]*false"
+    sed -i "s/$quit_flag_false/$quit_key true/" "$mumble_cfg"
+
+    if [[ "$show_warning" == "true" ]]; then
+        echo "Warning: Mumble had not quit properly from the previous run."
+        echo "If any issue persists, please try to inspect by starting the"
+        echo -e "GUI manually or by using 'broo -p'.\n"
+    fi
+}  # End of reset_mumble_quit_flag()
+
+
 stop_mumble_server() {
     # Stops the Mumble server, and deletes the PID file if it remains.
 
@@ -67,6 +92,8 @@ stop_mumble_server() {
 start_mumble_client () {
     # Starts the Mumble client (with logs for monitoring), stores its PID,
     # and waits till the connection to server is established.
+
+    reset_mumble_quit_flag "true"
 
     # We prefer offscreen, but there can be a rare case that using offscreen
     # can cause mumble to not connect to server, so we test during setup.
@@ -95,6 +122,7 @@ stop_mumble_client() {
 
     echo -n "."
     kill $(<"$VAR_RUN/mumble_client.pid")
+    reset_mumble_quit_flag
     rm "$VAR_RUN/mumble_client.pid"
     rm "$VAR_RUN/mumble_client.out"
 }  # End of stop_mumble_client()
