@@ -72,7 +72,8 @@ start_mumble_client () {
     # can cause mumble to not connect to server, so we test during setup.
     # A file "no_offscreen" is created if we don't want to do offscreen.
     if [[ -f "$BROO_CFG_LOC/no_offscreen" ]]; then
-        nohup mumble "mumble://127.0.0.1" \ &>"$VAR_RUN/mumble_client.out" &
+        nohup mumble "mumble://127.0.0.1" \
+            &>"$VAR_RUN/mumble_client.out" &
     else
         nohup mumble "mumble://broo@127.0.0.1" -platform offscreen \
             &>"$VAR_RUN/mumble_client.out" &
